@@ -1,5 +1,7 @@
 # ZoomedInsetAxis
 
+![Example image](https://github.com/hatfullr/ZoomedInsetAxis/blob/main/all_solutions_with_particles_Galaviz_Tr_take4.png)
+
 This is a function that can be used with matplotlib for Python 3+ to create an inset axis that is a zoomed-in version of the parent axis, inspired by the `ax.inset_axis`. You can import it as,
 ```
 from ZoomedInsetAxis import zoomed_inset_axis
