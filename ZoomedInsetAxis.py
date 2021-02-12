@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
-from matplotlib.transforms import Bbox
 import matplotlib as mpl
 import numpy as np
-import inspect
 
 # This makes an inset axis on the input ax. The inset axis is zoomed
 # in to the input data limits.
@@ -107,7 +105,6 @@ def zoomed_inset_axis(ax,
     inset_ax = ax.inset_axes([x0,y0,width,height],*args,**kwargs)
     ax = inset_ax.axes # Re-find the axis this belongs to
 
-
     # Do our best to re-plot everything
     new_artists = []
     for old_artist in old_artists:
@@ -143,50 +140,30 @@ def zoomed_inset_axis(ax,
                                          zorder=properties['zorder'])[0])
         elif type(old_artist).__name__ == 'PathCollection': # Guess that this is an ax.scatter object
             properties = old_artist.properties()
-            offsets = properties['offsets']
-            new_artists.append(inset_ax.scatter(offsets[:,0],offsets[:,1],
-                                            c=properties['array'],
-                                            cmap=properties['cmap'],
-                                            vmin=properties['clim'][0],
-                                            vmax=properties['clim'][1],
-                                            s=properties['sizes'],
-                                            label=properties['label'],
-                                            alpha=properties['alpha'],
-                                            zorder=properties['zorder'],
-                                            edgecolor=None if any(properties['array']) else properties['edgecolor'],
-                                            facecolor=properties['facecolor'],
-                                            hatch=properties['hatch'],
-                                            linestyle=properties['linestyle'],
-                                            linewidth=properties['linewidth'],
-                                            path_effects=properties['path_effects'],
-                                            picker=properties['picker'],
-                                            pickradius=properties['pickradius'],
-                                            rasterized=properties['rasterized'],
-                                            sketch_params=properties['sketch_params'],
-                                            snap=properties['snap'],
-                                            url=properties['url'],
-                                            urls=properties['urls'],
-                                            visible=properties['visible']))
-
-    #inset_ax._animated = False
-    #for new_artist in new_artists:
-    #    if new_artist.properties()['animated']:
-    #        inset_ax._animated = True
-
-    # Copy over all the attributes
-    """
-    for old_artist,new_artist in zip(old_artists,new_artists):
-
-        dirold_artist = dir(old_artist)
-        dirnew_artist = dir(new_artist)
-        for attr in dirold_artist: # attr is "get"
-            asplit = attr.split("_")
-            if asplit[0] == 'get': # Check for a set command
-                for a in dirold_artist: # a is "set"
-                    asplit2 = a.split("_")
-                    if asplit2[0] == 'set' and asplit[1:] is asplit2[1:]:
-                        getattr(new_artist,attr)(getattr(child,a)())
-    """
+            new_artists.append(inset_ax.scatter(properties['offsets'][:,0],properties['offsets'][:,1],
+                                                marker=properties['paths'][0], # This works, but I'm not sure why
+                                                c=properties['array'],
+                                                cmap=properties['cmap'],
+                                                vmin=properties['clim'][0],
+                                                vmax=properties['clim'][1],
+                                                s=properties['sizes'],
+                                                label=properties['label'],
+                                                alpha=properties['alpha'],
+                                                zorder=properties['zorder'],
+                                                edgecolor=None if any(properties['array']) else properties['edgecolor'],
+                                                facecolor=properties['facecolor'],
+                                                hatch=properties['hatch'],
+                                                linestyle=properties['linestyle'],
+                                                linewidth=properties['linewidth'],
+                                                path_effects=properties['path_effects'],
+                                                picker=properties['picker'],
+                                                pickradius=properties['pickradius'],
+                                                rasterized=properties['rasterized'],
+                                                sketch_params=properties['sketch_params'],
+                                                snap=properties['snap'],
+                                                url=properties['url'],
+                                                urls=properties['urls'],
+                                                visible=properties['visible']))
 
     inset_ax.set_xticklabels('')
     inset_ax.set_yticklabels('')
