@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
+from matplotlib.transforms import Bbox
 import matplotlib as mpl
 import numpy as np
+import inspect
 
 # This makes an inset axis on the input ax. The inset axis is zoomed
 # in to the input data limits.
@@ -105,65 +107,106 @@ def zoomed_inset_axis(ax,
     inset_ax = ax.inset_axes([x0,y0,width,height],*args,**kwargs)
     ax = inset_ax.axes # Re-find the axis this belongs to
 
+
     # Do our best to re-plot everything
     new_artists = []
     for old_artist in old_artists:
         if type(old_artist).__name__ == 'Line2D': # Guess that this is an ax.plot object
             properties = old_artist.properties()
-            new_artists.append(inset_ax.plot(properties['xdata'],properties['ydata'],
-                                         color=properties['color'],
-                                         linestyle=properties['linestyle'],
-                                         linewidth=properties['linewidth'],
-                                         marker=properties['marker'],
-                                         markeredgecolor=properties['markeredgecolor'],
-                                         markeredgewidth=properties['markeredgewidth'],
-                                         markerfacecolor=properties['markerfacecolor'],
-                                         markerfacecoloralt=properties['markerfacecoloralt'],
-                                         markersize=properties['markersize'],
-                                         markevery=properties['markevery'],
-                                         path_effects=properties['path_effects'],
-                                         dash_capstyle=properties['dash_capstyle'],
-                                         dash_joinstyle=properties['dash_joinstyle'],
-                                         picker=properties['picker'],
-                                         pickradius=properties['pickradius'],
-                                         rasterized=properties['rasterized'],
-                                         sketch_params=properties['sketch_params'],
-                                         snap=properties['snap'],
-                                         solid_capstyle=properties['solid_capstyle'],
-                                         solid_joinstyle=properties['solid_joinstyle'],
-                                         drawstyle=properties['drawstyle'],
-                                         fillstyle=properties['fillstyle'],
-                                         label=properties['label'],
-                                         alpha=properties['alpha'],
-                                         url=properties['url'],
-                                         visible=properties['visible'],
-                                         zorder=properties['zorder'])[0])
+            
+            kwargs = {}
+            kwargs['color']=properties['color']
+            kwargs['linestyle']=properties['linestyle']
+            kwargs['linewidth']=properties['linewidth']
+            kwargs['marker']=properties['marker']
+            kwargs['markeredgecolor']=properties['markeredgecolor']
+            kwargs['markeredgewidth']=properties['markeredgewidth']
+            kwargs['markerfacecolor']=properties['markerfacecolor']
+            kwargs['markerfacecoloralt']=properties['markerfacecoloralt']
+            kwargs['markersize']=properties['markersize']
+            kwargs['markevery']=properties['markevery']
+            kwargs['path_effects']=properties['path_effects']
+            kwargs['dash_capstyle']=properties['dash_capstyle']
+            kwargs['dash_joinstyle']=properties['dash_joinstyle']
+            kwargs['picker']=properties['picker']
+            kwargs['pickradius']=properties['pickradius']
+            kwargs['rasterized']=properties['rasterized']
+            kwargs['sketch_params']=properties['sketch_params']
+            kwargs['snap']=properties['snap']
+            kwargs['solid_capstyle']=properties['solid_capstyle']
+            kwargs['solid_joinstyle']=properties['solid_joinstyle']
+            kwargs['drawstyle']=properties['drawstyle']
+            kwargs['fillstyle']=properties['fillstyle']
+            kwargs['label']=properties['label']
+            kwargs['alpha']=properties['alpha']
+            kwargs['url']=properties['url']
+            kwargs['visible']=properties['visible']
+            kwargs['zorder']=properties['zorder']
+
+            xdata = properties['xdata']
+            ydata = properties['ydata']
+
+            args = [xdata,ydata]
+            method = inset_ax.plot
+            if len(xdata) == 2 and (0. in xdata and 1. in xdata) and len(np.unique(ydata)) == 1: # This is an axhline
+                method = inset_ax.axhline
+                args = [ydata[0]]
+            if len(ydata) == 2 and (0. in ydata and 1. in ydata) and len(np.unique(xdata)) == 1: # This is an axvline
+                method = inset_ax.axvline
+                args = [xdata[0]]
+            
+            result = method(*args,**kwargs)
+            if not isinstance(result,(list,tuple,np.ndarray)):
+                new_artists.append(result)
+            else:
+                for element in result: new_artists.append(element)
+                
         elif type(old_artist).__name__ == 'PathCollection': # Guess that this is an ax.scatter object
             properties = old_artist.properties()
-            new_artists.append(inset_ax.scatter(properties['offsets'][:,0],properties['offsets'][:,1],
-                                                marker=properties['paths'][0], # This works, but I'm not sure why
-                                                c=properties['array'],
-                                                cmap=properties['cmap'],
-                                                vmin=properties['clim'][0],
-                                                vmax=properties['clim'][1],
-                                                s=properties['sizes'],
-                                                label=properties['label'],
-                                                alpha=properties['alpha'],
-                                                zorder=properties['zorder'],
-                                                edgecolor=None if any(properties['array']) else properties['edgecolor'],
-                                                facecolor=properties['facecolor'],
-                                                hatch=properties['hatch'],
-                                                linestyle=properties['linestyle'],
-                                                linewidth=properties['linewidth'],
-                                                path_effects=properties['path_effects'],
-                                                picker=properties['picker'],
-                                                pickradius=properties['pickradius'],
-                                                rasterized=properties['rasterized'],
-                                                sketch_params=properties['sketch_params'],
-                                                snap=properties['snap'],
-                                                url=properties['url'],
-                                                urls=properties['urls'],
-                                                visible=properties['visible']))
+            offsets = properties['offsets']
+            new_artists.append(inset_ax.scatter(offsets[:,0],offsets[:,1],
+                                            c=properties['array'],
+                                            cmap=properties['cmap'],
+                                            vmin=properties['clim'][0],
+                                            vmax=properties['clim'][1],
+                                            s=properties['sizes'],
+                                            label=properties['label'],
+                                            alpha=properties['alpha'],
+                                            zorder=properties['zorder'],
+                                            edgecolor=None if properties['array'] is None or any(properties['array']) else properties['edgecolor'],
+                                            facecolor=properties['facecolor'],
+                                            hatch=properties['hatch'],
+                                            linestyle=properties['linestyle'],
+                                            linewidth=properties['linewidth'],
+                                            path_effects=properties['path_effects'],
+                                            picker=properties['picker'],
+                                            pickradius=properties['pickradius'],
+                                            rasterized=properties['rasterized'],
+                                            sketch_params=properties['sketch_params'],
+                                            snap=properties['snap'],
+                                            url=properties['url'],
+                                            urls=properties['urls'],
+                                            visible=properties['visible']))
+
+    #inset_ax._animated = False
+    #for new_artist in new_artists:
+    #    if new_artist.properties()['animated']:
+    #        inset_ax._animated = True
+
+    # Copy over all the attributes
+    """
+    for old_artist,new_artist in zip(old_artists,new_artists):
+
+        dirold_artist = dir(old_artist)
+        dirnew_artist = dir(new_artist)
+        for attr in dirold_artist: # attr is "get"
+            asplit = attr.split("_")
+            if asplit[0] == 'get': # Check for a set command
+                for a in dirold_artist: # a is "set"
+                    asplit2 = a.split("_")
+                    if asplit2[0] == 'set' and asplit[1:] is asplit2[1:]:
+                        getattr(new_artist,attr)(getattr(child,a)())
+    """
 
     inset_ax.set_xticklabels('')
     inset_ax.set_yticklabels('')
